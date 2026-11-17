@@ -13,7 +13,7 @@ export interface UpdateState {
   downloadedFile?: string
 }
 
-export interface HuobaoDesktopBridge {
+export interface DreamFactoryDesktopBridge {
   pickDirectory: () => Promise<{ ok: boolean, path?: string, freeBytes?: number | null, error?: string, canceled?: boolean }>
   startMigration: (opts: { targetDir: string, migrateFiles: boolean }) => Promise<{ ok: boolean }>
   onMigrateProgress: (cb: (progress: { phase: string, message?: string, copiedBytes?: number, totalBytes?: number }) => void) => () => void
@@ -24,7 +24,7 @@ export interface HuobaoDesktopBridge {
   onUpdateProgress: (cb: (percent: number) => void) => () => void
 }
 
-export function useDesktopBridge(): HuobaoDesktopBridge | null {
+export function useDesktopBridge(): DreamFactoryDesktopBridge | null {
   if (typeof window === 'undefined') return null
-  return (window as unknown as { huobaoDesktop?: HuobaoDesktopBridge }).huobaoDesktop ?? null
+  return (window as unknown as { huobaoDesktop?: DreamFactoryDesktopBridge }).huobaoDesktop ?? null
 }

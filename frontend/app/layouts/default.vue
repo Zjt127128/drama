@@ -5,12 +5,12 @@
       <div class="header-left">
         <button class="brand" @click="navigateTo('/')">
           <div class="brand-mark">
-            <img v-if="showBrandImage" :src="brandLogo" alt="火宝短剧" class="brand-logo" @error="showBrandImage = false" />
-            <span v-else class="brand-fallback">火</span>
+            <img v-if="showBrandImage" :src="brandLogo" :alt="t('app.title')" class="brand-logo" @error="showBrandImage = false" />
+            <span v-else class="brand-fallback">DF</span>
           </div>
           <div class="brand-text">
-            <span class="brand-name">火宝短剧</span>
-            <span class="brand-sub">Huobao Shorts</span>
+            <span class="brand-name">{{ t('app.title') }}</span>
+            <span class="brand-sub">DreamFactory</span>
           </div>
         </button>
       </div>
@@ -29,7 +29,7 @@
       <div class="header-right">
         <a
           class="github-link"
-          href="https://github.com/chatfire-AI/huobao-drama"
+          href="https://github.com/Zjt127128/drama"
           target="_blank"
           rel="noopener"
           aria-label="GitHub"
@@ -102,12 +102,21 @@ watch(locale, checkAiConfigs)
   display: flex; align-items: center;
   height: 60px; flex-shrink: 0;
   padding: 0 24px;
-  gap: 32px;
+  gap: 28px;
   background: var(--header-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--border);
   position: relative; z-index: 10;
+}
+.header::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--accent-glow) 50%, transparent 100%);
+  pointer-events: none;
+  opacity: 0.6;
 }
 
 .header-left { display: flex; align-items: center; }
@@ -143,18 +152,19 @@ watch(locale, checkAiConfigs)
 }
 .brand-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
 .brand-name {
-  font-size: 15px; font-weight: 700;
-  /* ChatFire 签名：品牌字标火焰橙渐变 */
+  font-size: 15.5px; font-weight: 800;
+  /* 造梦工厂：极光紫蓝渐变字标 */
   background: var(--accent-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 .brand-sub {
-  font-size: 10px; font-weight: 400;
-  color: var(--text-3); margin-top: 1px;
-  letter-spacing: 0.04em;
+  font-size: 9.5px; font-weight: 600;
+  color: var(--text-3); margin-top: 2px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
 }
 
 /* Nav — pill segmented group */

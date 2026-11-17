@@ -2120,11 +2120,13 @@ const RESOLUTION_TIERS = {
   volcengine: ['480p', '720p'],
   minimax: ['720p', '1080p'],
   aliyun: ['480p', '720p', '1080p'],
+  grsai: ['480p', '720p', '1080p'],
 }
 const RESOLUTION_DISPLAY = {
   volcengine: { '480p': '480p', '720p': '720p', '1080p': '720p' },
   minimax: { '480p': '768P', '720p': '768P', '1080p': '2K' },
   aliyun: { '480p': '480P', '720p': '720P', '1080p': '1080P' },
+  grsai: { '480p': '480p', '720p': '768p', '1080p': '1080p' },
 }
 const resolutionProvider = computed(() => RESOLUTION_TIERS[selectedVideoConfig.value?.provider] ? selectedVideoConfig.value.provider : 'volcengine')
 const resolutionOptions = computed(() => RESOLUTION_TIERS[resolutionProvider.value].map(key => ({
@@ -2225,6 +2227,11 @@ const batchVideoTotalDuration = computed(() =>
 function openBatchVideoConfirm(pool) {
   const targets = pool.filter(s => !isPendingVideo(s.id))
   if (!targets.length) { toast.info(t('episode.vid.noneToGenerate')); return }
+  const invalid = targets.find(sb => grsaiDurationError(Number(sb.duration || 10)))
+  if (invalid) {
+    toast.error(`分镜 ${shotNumberOf(invalid)}：${grsaiDurationError(Number(invalid.duration || 10))}`)
+    return
+  }
   batchVideoConfirm.value = { open: true, targets }
 }
 function batchVideos() {
@@ -3312,7 +3319,14 @@ function resolveVideoPromptRefs(sb) {
 }
 
 // 分镜时长（视频生成参数区直接编辑并保存到分镜）：
-// 统一限制 2-30s，列表/批量/单次生成统一读取该值；超出厂商支持范围由后端适配器收敛
+// 一般视频保持原有 2-30s 编辑范围；Grsai H3 仅接受整数 1-15s，1080p 最多 10s。
+// 不自动改写已有分镜或将超限时长截断为另一档收费时长，提交前会明确报错。
+function grsaiDurationError(duration, resolution = episodeResolution.value, provider = selectedVideoConfig.value?.provider) {
+  if (provider !== 'grsai') return ''
+  if (!Number.isInteger(duration) || duration < 1 || duration > 15) return 'Grsai H3 视频时长必须为 1–15 秒的整数。'
+  if (resolution === '1080p' && duration > 10) return 'Grsai H3 的 1080p 视频最长为 10 秒。'
+  return ''
+}
 function onVideoDurationChange(e) {
   const sb = selectedSb.value
   if (!sb) return
@@ -3365,6 +3379,11 @@ function uploadAssetImage(kind, id) {
 
 async function genVid(sb, opts = {}) {
   if (!opts.forceNew && canRecoverVideo(sb.id)) return recoverVideo(sb)
+  const durationError = grsaiDurationError(Number(sb.duration || 10))
+  if (durationError) {
+    if (!opts.silent) toast.error(durationError)
+    return
+  }
   const latest = latestVideoTask(sb.id)
   const forceNew = opts.forceNew || latest?.status === 'failed'
   if (forceNew && !window.confirm(t('episode.recovery.confirmNew'))) return
@@ -3514,19 +3533,20 @@ onMounted(() => setTimeout(() => autoTour('episode', EPISODE_TOUR, t), 900))
 }
 
 .studio-topbar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
-  min-height: 40px;
-  padding: 4px 10px;
+  min-height: 46px;
+  padding: 6px 12px;
   border-radius: var(--radius-lg);
   background: var(--header-bg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-card);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
 .studio-topbar-main,
@@ -3764,16 +3784,16 @@ onMounted(() => setTimeout(() => autoTour('episode', EPISODE_TOUR, t), 900))
   border-color: transparent;
   box-shadow: none;
 }
-/* ChatFire 签名：激活步骤左侧 3px 品牌色圆角指示条 */
+/* 造梦工厂：激活步骤左侧 3px 极光指示条 */
 .pipe-item.active::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 9px;
-  bottom: 9px;
+  top: 8px;
+  bottom: 8px;
   width: 3px;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--accent-gradient);
 }
 .pipe-item:focus-visible {
   outline: none;
@@ -4039,12 +4059,13 @@ onMounted(() => setTimeout(() => autoTour('episode', EPISODE_TOUR, t), 900))
 .step-name { font-size: 12.5px; font-weight: 700; color: var(--text-1); font-family: var(--font-display); }
 .char-count { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 
-/* Editor Area */
+/* Editor Area — 居中限宽剧本稿纸排版 */
 .step-editor { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .fill-textarea {
-  flex: 1; border: none; border-radius: 0; padding: 26px 28px;
-  font-size: 13.5px; line-height: 1.9; resize: none; outline: none;
-  font-family: var(--font-body); background: var(--bg-input); color: var(--text-0);
+  flex: 1; border: none; border-radius: 0;
+  padding: 30px max(32px, calc(50% - 410px));
+  font-size: 14px; line-height: 1.9; resize: none; outline: none;
+  font-family: var(--font-body); background: var(--surface-soft); color: var(--text-0);
 }
 .fill-textarea:focus { box-shadow: none; }
 
@@ -4584,7 +4605,8 @@ onMounted(() => setTimeout(() => autoTour('episode', EPISODE_TOUR, t), 900))
   align-items: center;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.85);
+  background: var(--surface-glass);
+  border: 1px solid var(--border);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);

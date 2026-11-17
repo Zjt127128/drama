@@ -13,7 +13,7 @@
           <li>{{ t('components.langSwitch.effectRefresh') }}</li>
         </ul>
         <div class="confirm-actions">
-          <button type="button" class="btn" @click="emit('cancel')">{{ t('common.cancel') }}</button>
+          <button type="button" class="btn btn-ghost" @click="emit('cancel')">{{ t('common.cancel') }}</button>
           <button type="button" class="btn btn-primary" @click="emit('confirm')">
             {{ t('components.langSwitch.confirm') }}
           </button>

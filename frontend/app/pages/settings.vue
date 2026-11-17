@@ -91,7 +91,7 @@
               </a>
             </p>
             <div class="huobao-quick-row">
-              <input v-model="huobaoApiKey" class="input" type="password" placeholder="Huobao API Key" />
+              <input v-model="huobaoApiKey" class="input" type="password" placeholder="API Key" />
               <div class="lang-picker">
                 <button
                   type="button"
@@ -104,7 +104,7 @@
                   @click="huobaoRegion = 'com'"
                 >{{ t('settings.ai.regionCom') }}</button>
               </div>
-              <button class="btn btn-primary" :disabled="huobaoSaving" @click="applyHuobaoQuickConfig">
+              <button class="btn btn-primary" :disabled="huobaoSaving" @click="applyConfig">
                 <Loader2 v-if="huobaoSaving" :size="13" class="animate-spin" />
                 <Sparkles v-else :size="13" />
                 {{ t('settings.ai.applyQuick') }}
@@ -161,7 +161,7 @@
                 <div class="config-main">
                   <div class="config-line">
                     <span class="config-name">{{ c.name || `${c.provider}-${c.service_type}` }}</span>
-                    <span :class="['tag', c.api_key ? 'tag-success' : 'tag-error']">{{ c.api_key ? t('settings.ai.hasKey') : t('settings.ai.noKey') }}</span>
+                    <span :class="['tag', (c.has_api_key ?? !!c.api_key) ? 'tag-success' : 'tag-error']">{{ (c.has_api_key ?? !!c.api_key) ? t('settings.ai.hasKey') : t('settings.ai.noKey') }}</span>
                     <span v-if="!c.is_active" class="tag">{{ t('settings.common.disabled') }}</span>
                   </div>
                   <div class="config-models">
@@ -517,7 +517,7 @@
             <input v-model.number="cfgForm.priority" class="input" type="number" min="0" max="999" />
             <span class="field-hint">{{ t('settings.cfg.priorityHint') }}</span>
           </label>
-          <label class="field"><span class="field-label">API Key</span><input v-model="cfgForm.api_key" class="input" type="password" placeholder="sk-..." /></label>
+          <label class="field"><span class="field-label">API Key</span><input v-model="cfgForm.api_key" class="input" type="password" :placeholder="cfgEditId ? '留空保留已保存密钥' : 'sk-...'" /></label>
           <label class="field"><span class="field-label">Base URL</span><input v-model="cfgForm.base_url" class="input" placeholder="https://..." /></label>
           <div class="field">
             <span class="field-label">{{ t('settings.cfg.models') }}</span>
@@ -561,7 +561,7 @@
             <Loader2 v-if="cfgTesting" :size="12" class="animate-spin" />
             <span v-else>{{ t('settings.cfg.test') }}</span>
           </button>
-          <button type="button" class="btn" @click="cfgDialog = false">{{ t('common.cancel') }}</button>
+          <button type="button" class="btn btn-ghost" @click="cfgDialog = false">{{ t('common.cancel') }}</button>
           <button type="submit" class="btn btn-primary">{{ t('common.save') }}</button>
         </div>
       </form>
@@ -588,7 +588,7 @@
           </label>
         </div>
         <div class="dialog-foot">
-          <button type="button" class="btn" @click="addSkillDialog = false">{{ t('common.cancel') }}</button>
+          <button type="button" class="btn btn-ghost" @click="addSkillDialog = false">{{ t('common.cancel') }}</button>
           <button type="submit" class="btn btn-primary" :disabled="!newSkillForm.id">{{ t('settings.skills.create') }}</button>
         </div>
       </form>
@@ -628,7 +628,7 @@
           </label>
         </div>
         <div class="dialog-foot">
-          <button type="button" class="btn" @click="styleDialog = false">{{ t('common.cancel') }}</button>
+          <button type="button" class="btn btn-ghost" @click="styleDialog = false">{{ t('common.cancel') }}</button>
           <button type="submit" class="btn btn-primary">{{ t('common.save') }}</button>
         </div>
       </form>
@@ -656,7 +656,7 @@
           <p class="field-hint">{{ t('settings.migrate.note') }}</p>
         </div>
         <div class="dialog-foot">
-          <button type="button" class="btn" :disabled="migrating" @click="migrateDialog = false">{{ t('common.cancel') }}</button>
+          <button type="button" class="btn btn-ghost" :disabled="migrating" @click="migrateDialog = false">{{ t('common.cancel') }}</button>
           <button type="submit" class="btn btn-primary" :disabled="migrating">
             <Loader2 v-if="migrating" :size="12" class="animate-spin" />
             {{ t('settings.migrate.start') }}
@@ -749,7 +749,7 @@ const serviceTypes = computed(() => [
   { type: 'image', label: t('common.serviceType.image') },
   { type: 'video', label: t('common.serviceType.video') },
 ])
-const providers = ['gemini', 'openai', 'volcengine', 'minimax', 'aliyun']
+const providers = ['gemini', 'openai', 'volcengine', 'grsai', 'minimax', 'aliyun']
 const providerSelectOptions = computed(() => providers.map(p => ({ label: p, value: p })))
 const serviceMeta = computed(() => ({
   text: { label: t('common.serviceType.text'), desc: t('settings.ai.meta.text') },
@@ -764,23 +764,25 @@ const providerPresets = {
   image: {
     gemini: { label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3-pro-image', 'gemini-3.1-flash-image'] },
     openai: { label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['gpt-image-2'] },
+    grsai: { label: 'Grsai Nano Banana Pro', baseUrl: 'https://grsai.dakka.com.cn', models: ['nano-banana-pro'] },
   },
   video: {
     aliyun: { label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
     volcengine: { label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
     minimax: { label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
+    grsai: { label: 'Grsai H3', baseUrl: 'https://grsai.dakka.com.cn', models: ['minimax-h3'] },
   },
 }
 const huobaoQuickConfigs = computed(() => {
   const base = huobaoSiteUrl.value
   return [
-    { service_type: 'text', provider: 'gemini', name: '火宝文本服务 · Gemini', base_url: base, model: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'], priority: 101 },
-    { service_type: 'text', provider: 'openai', name: '火宝文本服务 · OpenAI', base_url: base, model: ['deepseek-v4-pro', 'deepseek-v4-flash', 'gpt-5.6-terra'], priority: 100 },
-    { service_type: 'image', provider: 'openai', name: '火宝图片服务 · OpenAI', base_url: base, model: ['gpt-image-2'], priority: 99 },
-    { service_type: 'image', provider: 'gemini', name: '火宝图片服务 · Gemini', base_url: base, model: ['gemini-3-pro-image', 'gemini-3.1-flash-image'], priority: 97 },
-    { service_type: 'video', provider: 'aliyun', name: '火宝视频服务 · Wan 3.0', base_url: `${base}/qwen`, model: ['wan3.0-video', 'wan3.0-video-prime'], priority: 97 },
-    { service_type: 'video', provider: 'volcengine', name: '火宝视频服务 · Seedance', base_url: `${base}/volcengine`, model: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'], priority: 96 },
-    { service_type: 'video', provider: 'minimax', name: '火宝视频服务 · MiniMax', base_url: `${base}/minimax`, model: ['MiniMax-H3'], priority: 98 },
+    { service_type: 'text', provider: 'gemini', name: 'DreamFactory Text · Gemini', base_url: base, model: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'], priority: 101 },
+    { service_type: 'text', provider: 'openai', name: 'DreamFactory Text · OpenAI', base_url: base, model: ['deepseek-v4-pro', 'deepseek-v4-flash', 'gpt-5.6-terra'], priority: 100 },
+    { service_type: 'image', provider: 'openai', name: 'DreamFactory Image · OpenAI', base_url: base, model: ['gpt-image-2'], priority: 99 },
+    { service_type: 'image', provider: 'gemini', name: 'DreamFactory Image · Gemini', base_url: base, model: ['gemini-3-pro-image', 'gemini-3.1-flash-image'], priority: 97 },
+    { service_type: 'video', provider: 'aliyun', name: 'DreamFactory Video · Wan 3.0', base_url: `${base}/qwen`, model: ['wan3.0-video', 'wan3.0-video-prime'], priority: 97 },
+    { service_type: 'video', provider: 'volcengine', name: 'DreamFactory Video · Seedance', base_url: `${base}/volcengine`, model: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'], priority: 96 },
+    { service_type: 'video', provider: 'minimax', name: 'DreamFactory Video · MiniMax', base_url: `${base}/minimax`, model: ['MiniMax-H3'], priority: 98 },
   ]
 })
 
@@ -837,7 +839,7 @@ async function setDefaultModel(type, c, m) {
 }
 async function toggleCfg(c) { await aiConfigAPI.update(c.id, { is_active: !c.is_active }); loadCfgs() }
 async function delCfg(id) { await aiConfigAPI.del(id); toast.success(t('index.deleted')); loadCfgs() }
-async function applyHuobaoQuickConfig() {
+async function applyConfig() {
   const apiKey = huobaoApiKey.value.trim()
   if (!apiKey) { toast.warning(t('settings.ai.apiKeyRequired')); return }
   huobaoSaving.value = true
@@ -871,7 +873,7 @@ function startEditCfg(c) {
   Object.assign(cfgForm, {
     name: c.name || '',
     provider: c.provider,
-    api_key: c.api_key || '',
+    api_key: '',
     base_url: c.base_url || '',
     models: Array.isArray(c.model) ? [...c.model] : String(c.model || '').split(',').map(s => s.trim()).filter(Boolean),
     service_type: c.service_type,
@@ -893,6 +895,7 @@ async function testCfgPayload(payload) {
   }
 }
 async function testDraftCfg() {
+  if (cfgEditId.value && !cfgForm.api_key) return testCfgPayload({ config_id: cfgEditId.value })
   await testCfgPayload({
     service_type: cfgForm.service_type,
     provider: cfgForm.provider,
@@ -903,13 +906,7 @@ async function testDraftCfg() {
 }
 async function testExistingCfg(c) {
   startEditCfg(c)
-  await testCfgPayload({
-    service_type: c.service_type,
-    provider: c.provider,
-    api_key: c.api_key || '',
-    base_url: c.base_url || '',
-    model: Array.isArray(c.model) ? c.model : [],
-  })
+  await testCfgPayload({ config_id: c.id })
 }
 async function saveCfg() {
   if (!cfgForm.provider) { toast.warning(t('settings.cfg.providerRequired')); return }
@@ -1428,11 +1425,13 @@ onBeforeUnmount(stopUsagePoll)
 .settings-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
 .settings-desc { font-size: 13px; color: var(--text-2); margin-top: 6px; }
 
-/* 火宝快捷配置 */
+/* 快捷网关配置 */
 .quick-card {
-  padding: 20px;
+  padding: 22px;
   margin-bottom: 16px;
-  border: 1.5px solid var(--accent);
+  border: 1px solid var(--accent-glow);
+  background: var(--hero-ambient), var(--surface-raised);
+  border-radius: var(--radius-lg);
 }
 .quick-card:hover { border-color: var(--accent); }
 .quick-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }

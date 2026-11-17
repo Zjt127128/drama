@@ -103,7 +103,7 @@ onMounted(() => {
   background: var(--scrim) !important;
   backdrop-filter: blur(2px);
 }
-/* 高亮框描边用品牌橙 */
+/* 高亮框描边用品牌色 */
 .driver-active-element .driver-popover-arrow svg path,
 .driver-active-element .driver-popover-arrow svg polygon {
   fill: var(--accent) !important;

@@ -8,8 +8,8 @@
         <h2 class="confirm-title">{{ effectiveTitle }}</h2>
         <p class="confirm-message">{{ message }}</p>
         <div class="confirm-actions">
-          <button type="button" class="btn" :disabled="loading" @click="emit('cancel')">{{ t('common.cancel') }}</button>
-          <button type="button" class="btn confirm-danger-btn" :disabled="loading" @click="emit('confirm')">
+          <button type="button" class="btn btn-ghost" :disabled="loading" @click="emit('cancel')">{{ t('common.cancel') }}</button>
+          <button type="button" class="btn btn-danger" :disabled="loading" @click="emit('confirm')">
             <Loader2 v-if="loading" :size="13" class="animate-spin" />
             {{ loading ? effectiveLoadingText : effectiveConfirmText }}
           </button>
@@ -94,10 +94,4 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   margin-top: 22px;
 }
 .confirm-actions .btn { flex: 1; }
-.confirm-danger-btn {
-  background: var(--action-danger);
-  color: var(--on-accent);
-}
-.confirm-danger-btn:hover { background: var(--action-danger-solid-hover); color: var(--on-accent); }
-.confirm-danger-btn:disabled { opacity: 0.6; }
 </style>
